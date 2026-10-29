@@ -55,7 +55,3 @@ This repository excludes `.env`, raw MySQL table files, local backups, and Pytho
 ## Screenshots
 
 Dashboard and workflow screenshots will be added here.
-
-## Credits
-
-FIU database course group project — Group 4.
