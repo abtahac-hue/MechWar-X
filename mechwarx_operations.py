@@ -85,7 +85,8 @@ def list_incidents():
         cursor = connection.cursor(dictionary=True)
         try:
             cursor.execute("""SELECT IncidentID AS id, MechID AS mech,
-                Severity AS severity, RepairStatus AS status
+                Severity AS severity, RepairStatus AS status,
+                IssueType AS issue_type
                 FROM MaintenanceIncident ORDER BY IncidentID DESC""")
             return cursor.fetchall()
         finally:
@@ -106,6 +107,54 @@ def mark_incident_repaired(incident_id):
             changed = cursor.rowcount
             connection.commit()
             return changed
+        finally:
+            cursor.close()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def create_incident(values):
+    """Create an auditable incident. Maintenance triggers lock critical failures."""
+    connection = get_connection()
+    try:
+        cursor = connection.cursor()
+        try:
+            cursor.execute(
+                """INSERT INTO MaintenanceIncident
+                (MechID, StaffID, ReportedByClientID, IncidentDescription,
+                 Severity, IssueType, RepairStatus, EngineeringNotes)
+                VALUES (%s, %s, %s, %s, %s, %s, 'Reported', %s)""",
+                (int(values["Mech ID"]), int(values["Technician ID"]),
+                 int(values["Reporting Client ID"]),
+                 values["Damage Description"], values["Severity"],
+                 values["Issue Type"], values["Engineering Notes"])
+            )
+            incident_id = cursor.lastrowid
+            connection.commit()
+            return incident_id
+        finally:
+            cursor.close()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def cancel_deployment(manifest_id):
+    """Cancel a booked manifest using the stored procedure and status trigger."""
+    connection = get_connection()
+    try:
+        cursor = connection.cursor()
+        try:
+            cursor.execute("CALL CancelDeployment(%s)", (int(manifest_id),))
+            while cursor.nextset():
+                pass
+            connection.commit()
+            return True
         finally:
             cursor.close()
     except Exception:
