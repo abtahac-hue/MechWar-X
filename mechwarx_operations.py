@@ -1,0 +1,107 @@
+"""Database operations for the MechWar-X desktop GUI.
+Uses the existing .env and db_connection.py; never runs setup SQL on import.
+"""
+from decimal import Decimal
+from db_connection import get_connection
+
+
+def register_mech(values):
+    connection = get_connection()
+    try:
+        cursor = connection.cursor()
+        try:
+            cursor.execute("""INSERT INTO Mech
+                (ChassisSerialNumber, Manufacturer, Model, AssemblyYear, ArmorColor,
+                 DailyDeploymentRate, MechTypeID, GarageID)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""", (
+                values['Chassis Serial Number'], values['Manufacturer'], values['Model'],
+                int(values['Assembly Year']), values['Armor Color'],
+                Decimal(values['Daily Deployment Rate']), int(values['Mech Type ID']),
+                int(values['Garage ID'])
+            ))
+            mech_id = cursor.lastrowid
+            cursor.execute("INSERT INTO MechInventory (MechID) VALUES (%s)", (mech_id,))
+            connection.commit()
+            return mech_id
+        finally:
+            cursor.close()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def search_deployments(client_id):
+    connection = get_connection()
+    try:
+        cursor = connection.cursor()
+        try:
+            cursor.execute("""SELECT SerialID, ClientID, MechID,
+                DATE_FORMAT(ScheduledStart, '%%Y-%%m-%%d %%H:%%i'), ManifestStatus
+                FROM DeploymentManifest WHERE ClientID=%s ORDER BY ScheduledStart DESC""", (client_id,))
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+    finally:
+        connection.close()
+
+
+def book_deployment(values):
+    connection = get_connection()
+    try:
+        cursor = connection.cursor()
+        try:
+            cursor.execute("CALL BookDeployment(%s,%s,%s,%s,%s,%s)", (
+                int(values['Client ID']), int(values['Mech ID']),
+                int(values['Departure Garage ID']), int(values['Return Garage ID']),
+                values['Scheduled Start'], values['Scheduled Return']
+            ))
+            # Consume any procedure results before closing the cursor.
+            while cursor.nextset():
+                pass
+            connection.commit()
+            return True
+        finally:
+            cursor.close()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def list_incidents():
+    connection = get_connection()
+    try:
+        cursor = connection.cursor(dictionary=True)
+        try:
+            cursor.execute("""SELECT IncidentID AS id, MechID AS mech,
+                Severity AS severity, RepairStatus AS status
+                FROM MaintenanceIncident ORDER BY IncidentID DESC""")
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+    finally:
+        connection.close()
+
+
+def mark_incident_repaired(incident_id):
+    connection = get_connection()
+    try:
+        cursor = connection.cursor()
+        try:
+            cursor.execute("""UPDATE MaintenanceIncident
+                SET RepairStatus='Repaired',
+                    RepairCompletedDate=GREATEST(NOW(), IncidentDate)
+                WHERE IncidentID=%s AND RepairStatus <> 'Repaired'""", (incident_id,))
+            changed = cursor.rowcount
+            connection.commit()
+            return changed
+        finally:
+            cursor.close()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
