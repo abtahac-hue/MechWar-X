@@ -925,7 +925,22 @@ class MechWarX(ctk.CTk):
             text_color=MUTED,
             font=("Arial", 11)
         )
-        self.maintenance_status.pack(pady=(0, 22))
+        self.maintenance_status.pack(pady=(0, 10))
+        ctk.CTkLabel(action_card, text="ADVANCED REPAIR STATUS",
+                     text_color=WHITE, font=("Arial", 12, "bold")).pack(
+                         anchor="w", padx=25, pady=(10, 5))
+        self.repair_status_selector = ctk.CTkOptionMenu(
+            action_card, values=["Reported", "In-Progress", "Awaiting Parts", "Repaired"],
+            fg_color="#273466", button_color=PURPLE)
+        self.repair_status_selector.pack(fill="x", padx=25, pady=(0, 10))
+        self.repair_notes_entry = ctk.CTkEntry(
+            action_card, placeholder_text="Updated engineering notes (optional)",
+            height=42, fg_color="#101427", border_color="#3B4166")
+        self.repair_notes_entry.pack(fill="x", padx=25, pady=(0, 10))
+        ctk.CTkButton(action_card, text="UPDATE INCIDENT STATUS",
+                      height=44, fg_color="#273466", hover_color="#3B4166",
+                      command=self.update_repair_status).pack(
+                          fill="x", padx=25, pady=(0, 22))
 
         report_card = ctk.CTkFrame(parent, fg_color="#17152E",
                                   corner_radius=18, border_width=1,
@@ -1072,6 +1087,32 @@ class MechWarX(ctk.CTk):
                     pady=14,
                     sticky="w"
                 )
+
+    def update_repair_status(self):
+        incident_id = self.incident_entry.get().strip()
+        if not incident_id.isdigit() or int(incident_id) <= 0:
+            self.maintenance_status.configure(
+                text="✕ Enter an existing positive Incident ID.",
+                text_color="#FB7185")
+            return
+        status = self.repair_status_selector.get()
+        notes = self.repair_notes_entry.get().strip()
+        if len(notes) > 2000:
+            self.maintenance_status.configure(
+                text="✕ Notes must contain 2000 characters or fewer.",
+                text_color="#FB7185")
+            return
+        self.maintenance_status.configure(
+            text="Updating incident status in MySQL...", text_color=MUTED)
+        def finished(changed):
+            self.maintenance_status.configure(
+                text=f"✓ Incident status updated to {status}." if changed
+                     else "ℹ Incident missing or already repaired.",
+                text_color="#4ADE80" if changed else "#FBBF24")
+            self._refresh_maintenance()
+        self._run_operation(
+            ops.update_incident_status, (int(incident_id), status, notes),
+            finished, self.maintenance_status)
 
     def mark_repaired(self):
         incident_id = self.incident_entry.get().strip()
