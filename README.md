@@ -17,8 +17,8 @@ MechWar-X is a database-driven desktop application created for an FIU database s
 | **Command Center** | Displays live counts of registered mechs, deployment manifests, and maintenance incidents |
 | **Mech Registration** | Validates mech specifications and inserts records into `Mech` and `MechInventory` in one transaction |
 | **Deployment Search** | Retrieves real deployment manifests for a specified client |
-| **Deployment Booking** | Calls the database's `BookDeployment` stored procedure to create a booking |
-| **Maintenance Console** | Lists incidents and updates unresolved repairs |
+| **Deployment Booking & cancellation** | Creates bookings with `BookDeployment` and cancels booked manifests using `CancelDeployment` |
+| **Maintenance Console** | Logs routine or critical incidents, views repairs, and resolves breakdowns |
 | **Visual design** | Dark neon interface with blue, purple, and pink aurora animation |
 
 ## Interface
@@ -39,7 +39,7 @@ Look up deployment manifests by client and review scheduled start times and book
 
 ### Maintenance Console
 
-Review incident severity, repair status, and unresolved critical maintenance items.
+Log routine and critical maintenance incidents, review severity and repair status, and resolve breakdowns. Critical incident reports trigger an automatic mech-availability lock.
 
 ![Maintenance incident console](screenshots/maintenance.png)
 
@@ -106,7 +106,7 @@ MechWar-X/
    | 4 | [`sql/04_deployment_lifecycle.sql`](sql/04_deployment_lifecycle.sql) | Add cancel, start, and complete routines |
    | 5 | [`sql/05_demo_seed.sql`](sql/05_demo_seed.sql) | **Optional:** insert fictional example records |
 
-   **Do not execute setup scripts against an existing populated database.** These scripts are intended for a first-time installation. They haven't yet been verified end-to-end on a separate clean MySQL instance.
+   **Do not execute these fresh-install scripts against an existing populated database.** They haven't yet been verified end-to-end on a separate clean MySQL instance.
 
 5. Start the desktop app:
 
@@ -115,6 +115,18 @@ MechWar-X/
    ```
 
 > **Note:** The dashboard needs MySQL to be running. Registration, booking, and repair actions write to the database. Work against a development database and back it up before testing changes.
+
+## Upgrading an existing installation
+
+If you already used the original eight-table database schema, your live database **does not yet have** the fields required for new incident reporting. Before running the updated GUI's incident-reporting feature:
+
+1. **Make a full backup of your existing MySQL database.**
+2. Inspect the current table: `SHOW CREATE TABLE MaintenanceIncident;`
+3. Read [`sql/06_upgrade_existing_database.sql`](sql/06_upgrade_existing_database.sql) carefully. It is a **one-time migration**, not a fresh-install script, and may need adjustment for installations with differing constraint names.
+4. Apply the migration **once, only after reviewing the backup and schema**, ideally first against a disposable copy.
+5. Confirm it succeeds using `SHOW COLUMNS FROM MaintenanceIncident;` and `SHOW TRIGGERS;`. Then restart the Python application.
+
+**Never run `01_schema.sql` or the demo seed over your existing populated database.** The migration has not yet been tested against the project's local database.
 
 ## Database design
 
@@ -130,9 +142,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branch-based contributions, testing e
 
 ## Testing status
 
-The application has been launched locally with MySQL connected. The dashboard, deployment search, maintenance incident listing, registration, and a successful deployment booking have been exercised manually.
+The original application was launched locally with MySQL connected. The dashboard, deployment search, maintenance incident listing, registration, and a successful deployment booking were exercised manually. **The new incident-reporting and cancellation GUI additions and one-time migration are not yet tested against the live database.**
 
-**Still to verify:** rejection of an overlapping second booking, updating a currently unresolved incident, automated tests, and a clean-machine installation.
+**Still to verify:** rejected overlapping booking, creating and repairing a new critical incident, cancellation-status synchronization, one-time migration, automated tests, and a clean-machine installation.
 
 ## Security
 
