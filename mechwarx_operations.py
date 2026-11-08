@@ -38,9 +38,17 @@ def search_deployments(client_id):
         cursor = connection.cursor()
         try:
             cursor.execute("""SELECT SerialID, ClientID, MechID,
-                DATE_FORMAT(ScheduledStart, '%%Y-%%m-%%d %%H:%%i'), ManifestStatus
+                ScheduledStart, ManifestStatus
                 FROM DeploymentManifest WHERE ClientID=%s ORDER BY ScheduledStart DESC""", (client_id,))
-            return cursor.fetchall()
+            rows = cursor.fetchall()
+            return [
+                (manifest_id, client, mech,
+                 scheduled_start.strftime("%Y-%m-%d %H:%M")
+                 if hasattr(scheduled_start, "strftime")
+                 else str(scheduled_start),
+                 status)
+                for manifest_id, client, mech, scheduled_start, status in rows
+            ]
         finally:
             cursor.close()
     finally:
