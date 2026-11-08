@@ -62,7 +62,8 @@ MechWar-X/
 ├── mechwarx_operations.py  # Registration, search, booking, and repairs
 ├── db_connection.py        # MySQL connection and dashboard counts
 ├── requirements.txt        # Python dependencies
-├── sql/                    # Clean schema, procedures, triggers, and demo seed
+├── sql/                    # Clean schema, procedures, triggers, migration, demo seed
+├── tools/                  # Backup and upgrade commands
 ├── screenshots/            # Screenshots from the running application
 ├── CONTRIBUTING.md         # Group collaboration guide
 ├── .env.example            # Placeholder database settings
@@ -120,10 +121,10 @@ MechWar-X/
 
 If you already used the original eight-table database schema, your live database **does not yet have** the fields required for new incident reporting. Before running the updated GUI's incident-reporting feature:
 
-1. **Make a full backup of your existing MySQL database.**
+1. **Make a full backup of your existing MySQL database.** From the project folder, run `py tools/backup_database.py` while MySQL is running. The export is saved outside the Git repository. Inspect the resulting `.sql` file and securely keep it.
 2. Inspect the current table: `SHOW CREATE TABLE MaintenanceIncident;`
 3. Read [`sql/06_upgrade_existing_database.sql`](sql/06_upgrade_existing_database.sql) carefully. It is a **one-time migration**, not a fresh-install script, and may need adjustment for installations with differing constraint names.
-4. Apply the migration **once, only after reviewing the backup and schema**, ideally first against a disposable copy.
+4. Apply the migration **once, only after reviewing the backup and schema**, ideally first against a disposable copy. If MySQL Workbench is unavailable, run `py tools/upgrade_existing_database.py --backup-confirmed` from the project directory and type the confirmation phrase when prompted.
 5. Confirm it succeeds using `SHOW COLUMNS FROM MaintenanceIncident;` and `SHOW TRIGGERS;`. Then restart the Python application.
 
 **Never run `01_schema.sql` or the demo seed over your existing populated database.** The migration has not yet been tested against the project's local database.
