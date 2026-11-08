@@ -122,4 +122,26 @@ BEGIN
   GarageID=v_ReturnGarageID WHERE MechID=v_MechID;
  COMMIT;
 END$$
+
+-- Automatic inventory synchronization whenever a booking is cancelled,
+-- including cancellation through any SQL client (not only the GUI).
+CREATE TRIGGER trg_deployment_cancellation_sync
+AFTER UPDATE ON DeploymentManifest
+FOR EACH ROW
+BEGIN
+ DECLARE v_UnresolvedCritical INT DEFAULT 0;
+ DECLARE v_Active INT DEFAULT 0;
+ IF NEW.ManifestStatus = 'Cancelled' AND OLD.ManifestStatus <> 'Cancelled' THEN
+  SELECT COUNT(*) INTO v_UnresolvedCritical FROM MaintenanceIncident
+   WHERE MechID=NEW.MechID AND IssueType='Critical'
+     AND RepairStatus <> 'Repaired';
+  SELECT COUNT(*) INTO v_Active FROM DeploymentManifest
+   WHERE MechID=NEW.MechID AND ManifestStatus='Active in Arena';
+  IF v_UnresolvedCritical=0 AND v_Active=0 THEN
+   UPDATE MechInventory SET OperationalStatus='Available',
+       LastStatusUpdate=CURRENT_TIMESTAMP WHERE MechID=NEW.MechID;
+  END IF;
+ END IF;
+END$$
+
 DELIMITER ;
