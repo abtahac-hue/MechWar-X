@@ -84,10 +84,20 @@ def list_incidents():
     try:
         cursor = connection.cursor(dictionary=True)
         try:
-            cursor.execute("""SELECT IncidentID AS id, MechID AS mech,
-                Severity AS severity, RepairStatus AS status,
-                IssueType AS issue_type
-                FROM MaintenanceIncident ORDER BY IncidentID DESC""")
+            try:
+                cursor.execute("""SELECT IncidentID AS id, MechID AS mech,
+                    Severity AS severity, RepairStatus AS status,
+                    IssueType AS issue_type
+                    FROM MaintenanceIncident ORDER BY IncidentID DESC""")
+            except Exception as exc:
+                # Keep incident viewing working on the original schema until
+                # the optional one-time migration has been applied.
+                if getattr(exc, "errno", None) != 1054:
+                    raise
+                cursor.execute("""SELECT IncidentID AS id, MechID AS mech,
+                    Severity AS severity, RepairStatus AS status,
+                    Severity AS issue_type
+                    FROM MaintenanceIncident ORDER BY IncidentID DESC""")
             return cursor.fetchall()
         finally:
             cursor.close()
