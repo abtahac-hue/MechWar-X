@@ -1,31 +1,65 @@
-# MechWar-X | Neo-Prime Command
+# ◈ MechWar-X | Neo-Prime Command
 
-A futuristic desktop fleet-management application built with **Python**, **CustomTkinter**, and **MySQL** for a database systems course project.
+**A neon-styled desktop command center for managing a futuristic mech fleet.**
 
-## Features
+MechWar-X is a database-driven desktop application created for an FIU database systems group project. It combines a **Python / CustomTkinter** interface with a **MySQL 8** relational database to manage machine registration, deployment schedules, and maintenance records.
 
-- **Command Center:** live counts for mechs, deployment manifests, and maintenance incidents.
-- **Mech Registration:** input validation and database-backed registration.
-- **Deployment Search:** look up deployment manifests by client.
-- **Book Deployment:** schedule deployments using MySQL stored procedures and business rules.
-- **Maintenance Console:** review maintenance incidents and record repairs.
-- **Interface:** dark neon dashboard with animated aurora accents.
+### At a glance
 
-## Technology
+| Area | What it does |
+| --- | --- |
+| **Command Center** | Displays live counts of registered mechs, deployment manifests, and maintenance incidents |
+| **Mech Registration** | Validates mech specifications and inserts records into `Mech` and `MechInventory` in one transaction |
+| **Deployment Search** | Retrieves real deployment manifests for a specified client |
+| **Deployment Booking** | Calls the database's `BookDeployment` stored procedure to create a booking |
+| **Maintenance Console** | Lists incidents and updates unresolved repairs |
+| **Visual design** | Dark neon interface with blue, purple, and pink aurora animation |
 
-Python · CustomTkinter · Tkinter · MySQL Connector/Python · MySQL · python-dotenv
+## Interface
 
-## Getting started
+The application includes five sidebar screens: **Dashboard**, **Mech Registration**, **Deployment Search**, **Book Deployment**, and **Maintenance Console**.
 
-1. Install **Python 3** and **MySQL 8**.
-2. Obtain the application source files (`main.py`, `mechwarx_operations.py`, and `db_connection.py`) and the database schema.
-3. Install dependencies:
+*Screenshots of the dashboard and workflows will be added after final review.*
+
+## Tech stack
+
+- **Language:** Python 3
+- **Desktop GUI:** CustomTkinter + Tkinter
+- **Database:** MySQL 8
+- **Database driver:** mysql-connector-python
+- **Configuration:** python-dotenv
+- **Architecture:** UI (`main.py`) → database operations (`mechwarx_operations.py`) → connection utility (`db_connection.py`) → MySQL
+
+## Repository files
+
+```text
+MechWar-X/
+├── main.py                 # Desktop GUI and screen navigation
+├── mechwarx_operations.py  # Registration, search, booking, and repairs
+├── db_connection.py        # MySQL connection and dashboard counts
+├── requirements.txt        # Python dependencies
+├── .env.example            # Placeholder database settings
+└── .gitignore              # Excludes credentials and local files
+```
+
+## Run locally
+
+**Prerequisites:** Python 3, a running MySQL 8 server, and a database named `MechWarX` with the expected tables and stored procedures.
+
+1. Clone the repository:
 
    ```bash
-   pip install customtkinter mysql-connector-python python-dotenv
+   git clone https://github.com/abtahac-hue/MechWar-X.git
+   cd MechWar-X
    ```
 
-4. Create a local `.env` file (never commit it):
+2. Install the required packages:
+
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+
+3. Copy `.env.example` to `.env`, then fill in **your own local MySQL credentials**:
 
    ```dotenv
    DB_HOST=127.0.0.1
@@ -35,23 +69,37 @@ Python · CustomTkinter · Tkinter · MySQL Connector/Python · MySQL · python-
    DB_NAME=MechWarX
    ```
 
-5. Create the database tables and required stored procedures from the project's SQL scripts.
-6. Run:
+4. Import the project's MySQL schema and stored procedures (including `BookDeployment`). **The schema/scripts are not yet included in this repository**, so a clean installation requires them separately.
+
+5. Start the desktop app:
 
    ```bash
    python main.py
    ```
 
-> The app requires a running MySQL instance. Some operations update actual database records; test against a backed-up development database.
+> **Note:** The dashboard needs MySQL to be running. Registration, booking, and repair actions write to the database. Work against a development database and back it up before testing changes.
 
-## Project status
+## Database design
 
-The desktop GUI has been launched and its database-connected dashboard, search, registration, and booking flows have been exercised locally. Full automated testing and installation from a clean machine are still pending.
+The application works with the following related tables:
+
+`MechType` · `BattleGarage` · `Mech` · `MechInventory` · `Client` · `DeploymentManifest` · `MaintenanceIncident` · `PitCrewTechnician`
+
+Key database features include foreign-key relationships, transactional registration, stored-procedure-driven deployment booking, and maintenance state updates.
+
+## Testing status
+
+The application has been launched locally with MySQL connected. The dashboard, deployment search, maintenance incident listing, registration, and a successful deployment booking have been exercised manually.
+
+**Still to verify:** rejection of an overlapping second booking, updating a currently unresolved incident, automated tests, and a clean-machine installation.
 
 ## Security
 
-This repository excludes `.env`, raw MySQL table files, local backups, and Python caches. Use `.env.example` to document configuration, never real credentials.
+- `.env` is excluded from Git and must never be committed.
+- Raw MySQL `.ibd` files, local database backups, and Python caches are excluded.
+- The included `.env.example` contains placeholders only.
+- Use the principle of least privilege when creating a local MySQL account.
 
-## Screenshots
+## Academic project
 
-Dashboard and workflow screenshots will be added here.
+Built as an **FIU database systems group project (Group 4)** and developed as a portfolio demonstration of relational database design, desktop application integration, validation, and data-driven user interfaces.
