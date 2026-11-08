@@ -41,9 +41,10 @@ def main():
         cursor = connection.cursor()
         try:
             cursor.execute("SHOW TABLES")
-            tables = {row[0] for row in cursor.fetchall()}
-            passes.append(show("Eight tables", EXPECTED_TABLES <= tables,
-                               f"{len(EXPECTED_TABLES & tables)}/8 found"))
+            tables = {str(row[0]).casefold() for row in cursor.fetchall()}
+            expected_tables = {name.casefold() for name in EXPECTED_TABLES}
+            passes.append(show("Eight tables", expected_tables <= tables,
+                               f"{len(expected_tables & tables)}/8 found"))
 
             cursor.execute("SHOW COLUMNS FROM MaintenanceIncident")
             columns = {row[0] for row in cursor.fetchall()}
@@ -72,7 +73,7 @@ def main():
                 ("Deployments", "DeploymentManifest"),
                 ("Maintenance incidents", "MaintenanceIncident"),
             ):
-                if table in tables:
+                if table.casefold() in tables:
                     cursor.execute(f"SELECT COUNT(*) FROM {table}")
                     print(f"  {label}: {cursor.fetchone()[0]}")
         finally:
