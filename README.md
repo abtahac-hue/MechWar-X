@@ -4,6 +4,12 @@
 
 MechWar-X is a database-driven desktop application created for an FIU database systems group project. It combines a **Python / CustomTkinter** interface with a **MySQL 8** relational database to manage machine registration, deployment schedules, and maintenance records.
 
+## Live dashboard
+
+![MechWar-X live Command Center dashboard](screenshots/dashboard.png)
+
+*Live MySQL dashboard showing the fleet overview, deployment records, and maintenance incidents.*
+
 ### At a glance
 
 | Area | What it does |
@@ -19,7 +25,7 @@ MechWar-X is a database-driven desktop application created for an FIU database s
 
 The application includes five sidebar screens: **Dashboard**, **Mech Registration**, **Deployment Search**, **Book Deployment**, and **Maintenance Console**.
 
-*Screenshots of the dashboard and workflows will be added after final review.*
+The Command Center screenshot above shows the real running desktop application. Additional workflow screenshots will be added after final review.
 
 ## Tech stack
 
