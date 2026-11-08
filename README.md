@@ -102,4 +102,4 @@ The application has been launched locally with MySQL connected. The dashboard, d
 
 ## Academic project
 
-Built as an **FIU database systems group project (Group 4)** and developed as a portfolio demonstration of relational database design, desktop application integration, validation, and data-driven user interfaces.
+Built as an **FIU database systems group project** and developed as a portfolio demonstration of relational database design, desktop application integration, validation, and data-driven user interfaces.
