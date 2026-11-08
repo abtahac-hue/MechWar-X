@@ -791,6 +791,37 @@ class MechWarX(ctk.CTk):
         )
         self.booking_status.pack(pady=(0, 25))
 
+        cancel_card = ctk.CTkFrame(parent, fg_color="#17152E", corner_radius=18,
+                                   border_width=1, border_color="#514080")
+        cancel_card.pack(fill="x", pady=(10, 20))
+        ctk.CTkLabel(cancel_card, text="CANCEL AN UPCOMING DEPLOYMENT",
+                     font=("Arial", 17, "bold"), text_color=WHITE).pack(
+                         anchor="w", padx=25, pady=(22, 8))
+        self.cancel_id_entry = ctk.CTkEntry(
+            cancel_card, placeholder_text="Enter booked Manifest ID",
+            height=42, fg_color="#101427", border_color="#3B4166")
+        self.cancel_id_entry.pack(fill="x", padx=25, pady=(0, 10))
+        ctk.CTkButton(cancel_card, text="CANCEL BOOKED DEPLOYMENT",
+                      fg_color="#7C3AED", hover_color="#6D28D9", height=44,
+                      command=self.cancel_booking).pack(fill="x", padx=25)
+        self.cancel_status = ctk.CTkLabel(
+            cancel_card, text="Cancels booked manifests using MySQL.",
+            text_color=MUTED)
+        self.cancel_status.pack(pady=(8, 20))
+
+    def cancel_booking(self):
+        manifest_id = self.cancel_id_entry.get().strip()
+        if not manifest_id.isdigit() or int(manifest_id) <= 0:
+            self.cancel_status.configure(text="✕ Enter a positive Manifest ID.",
+                                         text_color="#FB7185")
+            return
+        self.cancel_status.configure(text="Cancelling in MySQL...", text_color=MUTED)
+        self._run_operation(
+            ops.cancel_deployment, (int(manifest_id),),
+            lambda _: self.cancel_status.configure(
+                text="✓ Deployment cancelled. Inventory status synchronized.",
+                text_color="#4ADE80"), self.cancel_status)
+
     def validate_booking(self):
         values = {key: entry.get().strip() for key, entry in self.booking_fields.items()}
         try:
@@ -811,15 +842,8 @@ class MechWarX(ctk.CTk):
 
 
     def build_maintenance(self, parent):
-        # Demo data based on our previously verified SQL records.
-        self.demo_incidents = [
-            {
-                "id": 1,
-                "mech": 3,
-                "severity": "Critical",
-                "status": "Repaired"
-            }
-        ]
+        # Live rows are loaded asynchronously from MySQL.
+        self.demo_incidents = []
 
         header = ctk.CTkFrame(
             parent,
@@ -903,8 +927,81 @@ class MechWarX(ctk.CTk):
         )
         self.maintenance_status.pack(pady=(0, 22))
 
+        report_card = ctk.CTkFrame(parent, fg_color="#17152E",
+                                  corner_radius=18, border_width=1,
+                                  border_color="#514080")
+        report_card.pack(fill="x", pady=(18, 16))
+        ctk.CTkLabel(report_card, text="FILE A NEW DAMAGE INCIDENT",
+                     font=("Arial", 18, "bold"), text_color="#D8B4FE").pack(
+                         anchor="w", padx=25, pady=(22, 10))
+        self.incident_fields = {}
+        for name, placeholder in (
+            ("Mech ID", "e.g. 3"),
+            ("Reporting Client ID", "e.g. 1"),
+            ("Technician ID", "e.g. 1"),
+            ("Damage Description", "Describe the damage or maintenance request"),
+            ("Engineering Notes", "Initial engineering / diagnostic notes"),
+        ):
+            ctk.CTkLabel(report_card, text=name, text_color=WHITE,
+                         font=("Arial", 12, "bold")).pack(
+                             anchor="w", padx=25, pady=(8, 4))
+            entry = ctk.CTkEntry(report_card, placeholder_text=placeholder,
+                                 height=43, fg_color="#101427",
+                                 border_color="#3B4166")
+            entry.pack(fill="x", padx=25, pady=(0, 8))
+            self.incident_fields[name] = entry
+        ctk.CTkLabel(report_card, text="Issue Type", text_color=WHITE).pack(
+            anchor="w", padx=25, pady=(8, 4))
+        self.incident_type = ctk.CTkOptionMenu(
+            report_card, values=["Routine", "Critical"], fg_color="#273466",
+            button_color=PURPLE)
+        self.incident_type.pack(fill="x", padx=25, pady=(0, 10))
+        ctk.CTkLabel(report_card, text="Severity", text_color=WHITE).pack(
+            anchor="w", padx=25, pady=(8, 4))
+        self.incident_severity = ctk.CTkOptionMenu(
+            report_card, values=["Low", "Medium", "High", "Critical"],
+            fg_color="#273466", button_color=PURPLE)
+        self.incident_severity.pack(fill="x", padx=25, pady=(0, 12))
+        ctk.CTkButton(report_card, text="FILE INCIDENT IN MYSQL",
+                      fg_color=PURPLE, height=46, command=self.file_incident).pack(
+                          fill="x", padx=25, pady=(10, 8))
+        self.new_incident_status = ctk.CTkLabel(
+            report_card, text="Critical failures automatically lock the mech.",
+            text_color=MUTED)
+        self.new_incident_status.pack(pady=(2, 22))
+
         self.render_maintenance()
         self._refresh_maintenance()
+
+    def file_incident(self):
+        values = {name: entry.get().strip()
+                  for name, entry in self.incident_fields.items()}
+        values["Issue Type"] = self.incident_type.get()
+        values["Severity"] = self.incident_severity.get()
+        for name in ("Mech ID", "Reporting Client ID", "Technician ID"):
+            if not values[name].isdigit() or int(values[name]) <= 0:
+                self.new_incident_status.configure(
+                    text=f"✕ Enter a positive {name}.", text_color="#FB7185")
+                return
+        if not values["Damage Description"] or not values["Engineering Notes"]:
+            self.new_incident_status.configure(
+                text="✕ Damage description and engineering notes are required.",
+                text_color="#FB7185")
+            return
+        if len(values["Damage Description"]) > 2000 or len(values["Engineering Notes"]) > 2000:
+            self.new_incident_status.configure(
+                text="✕ Use 2000 characters or fewer per description.",
+                text_color="#FB7185")
+            return
+        self.new_incident_status.configure(text="Saving incident to MySQL...",
+                                           text_color=MUTED)
+        def finished(incident_id):
+            self.new_incident_status.configure(
+                text=f"✓ Incident #{incident_id} saved. Critical asset lock applied if needed.",
+                text_color="#4ADE80")
+            self._refresh_maintenance()
+        self._run_operation(ops.create_incident, (values,), finished,
+                            self.new_incident_status)
 
     def render_maintenance(self):
         for widget in self.maintenance_table.winfo_children():
@@ -912,7 +1009,7 @@ class MechWarX(ctk.CTk):
 
         unresolved = sum(
             1 for incident in self.demo_incidents
-            if incident["severity"] == "Critical"
+            if incident.get("issue_type", incident["severity"]) == "Critical"
             and incident["status"] != "Repaired"
         )
 
@@ -921,7 +1018,7 @@ class MechWarX(ctk.CTk):
         )
 
         columns = [
-            "INCIDENT ID", "MECH ID", "SEVERITY", "REPAIR STATUS"
+            "INCIDENT ID", "MECH ID", "TYPE", "SEVERITY", "REPAIR STATUS"
         ]
 
         for col, label in enumerate(columns):
@@ -946,6 +1043,7 @@ class MechWarX(ctk.CTk):
             values = [
                 incident["id"],
                 incident["mech"],
+                incident.get("issue_type", incident["severity"]),
                 incident["severity"],
                 incident["status"]
             ]
@@ -953,10 +1051,10 @@ class MechWarX(ctk.CTk):
             for col, value in enumerate(values):
                 color = WHITE
 
-                if col == 2 and value == "Critical":
+                if col in (2, 3) and value == "Critical":
                     color = "#FB7185"
 
-                if col == 3:
+                if col == 4:
                     color = (
                         "#4ADE80" if value == "Repaired"
                         else "#FBBF24"
