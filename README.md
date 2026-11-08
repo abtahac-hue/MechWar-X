@@ -62,6 +62,9 @@ MechWar-X/
 ├── mechwarx_operations.py  # Registration, search, booking, and repairs
 ├── db_connection.py        # MySQL connection and dashboard counts
 ├── requirements.txt        # Python dependencies
+├── sql/                    # Clean schema, procedures, triggers, and demo seed
+├── screenshots/            # Screenshots from the running application
+├── CONTRIBUTING.md         # Group collaboration guide
 ├── .env.example            # Placeholder database settings
 └── .gitignore              # Excludes credentials and local files
 ```
@@ -93,7 +96,17 @@ MechWar-X/
    DB_NAME=MechWarX
    ```
 
-4. Import the project's MySQL schema and stored procedures (including `BookDeployment`). **The schema/scripts are not yet included in this repository**, so a clean installation requires them separately.
+4. **Initialize a new, empty development database** using MySQL Workbench. Open and execute these files **in this order**, one at a time:
+
+   | Order | File | Purpose |
+   | --- | --- | --- |
+   | 1 | [`sql/01_schema.sql`](sql/01_schema.sql) | Create the database and all eight related tables |
+   | 2 | [`sql/02_book_deployment.sql`](sql/02_book_deployment.sql) | Add booking validation, transaction, and overlap checks |
+   | 3 | [`sql/03_maintenance_triggers.sql`](sql/03_maintenance_triggers.sql) | Keep critical-maintenance availability in sync |
+   | 4 | [`sql/04_deployment_lifecycle.sql`](sql/04_deployment_lifecycle.sql) | Add cancel, start, and complete routines |
+   | 5 | [`sql/05_demo_seed.sql`](sql/05_demo_seed.sql) | **Optional:** insert fictional example records |
+
+   **Do not execute setup scripts against an existing populated database.** These scripts are intended for a first-time installation. They haven't yet been verified end-to-end on a separate clean MySQL instance.
 
 5. Start the desktop app:
 
@@ -111,6 +124,10 @@ The application works with the following related tables:
 
 Key database features include foreign-key relationships, transactional registration, stored-procedure-driven deployment booking, and maintenance state updates.
 
+## Team collaboration
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch-based contributions, testing expectations, and safe handling of local database files. Each collaborator should configure their own MySQL development database and local `.env`.
+
 ## Testing status
 
 The application has been launched locally with MySQL connected. The dashboard, deployment search, maintenance incident listing, registration, and a successful deployment booking have been exercised manually.
@@ -122,6 +139,8 @@ The application has been launched locally with MySQL connected. The dashboard, d
 - `.env` is excluded from Git and must never be committed.
 - Raw MySQL `.ibd` files, local database backups, and Python caches are excluded.
 - The included `.env.example` contains placeholders only.
+- SQL scripts contain fictional `.example` contact addresses, not real credentials or personal customer records.
+- The `sql/` setup files intentionally exclude the original coursework's destructive/duplicate-entry test statements.
 - Use the principle of least privilege when creating a local MySQL account.
 
 ## Academic project
