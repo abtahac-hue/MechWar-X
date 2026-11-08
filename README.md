@@ -25,7 +25,25 @@ MechWar-X is a database-driven desktop application created for an FIU database s
 
 The application includes five sidebar screens: **Dashboard**, **Mech Registration**, **Deployment Search**, **Book Deployment**, and **Maintenance Console**.
 
-The Command Center screenshot above shows the real running desktop application. Additional workflow screenshots will be added after final review.
+### Mech Registration
+
+Capture and validate mech specifications, including manufacturer, model, assembly year, mech type, garage, and deployment rate.
+
+![Mech registration form and MySQL action](screenshots/registration.png)
+
+### Deployment Search
+
+Look up deployment manifests by client and review scheduled start times and booking statuses pulled from MySQL.
+
+![Deployment search showing real MySQL records](screenshots/deployment.png)
+
+### Maintenance Console
+
+Review incident severity, repair status, and unresolved critical maintenance items.
+
+![Maintenance incident console](screenshots/maintenance.png)
+
+*All screenshots are from the desktop application; the registration screenshot shows the lower portion of its scrollable form.*
 
 ## Tech stack
 
