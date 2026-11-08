@@ -116,18 +116,26 @@ CREATE TABLE MaintenanceIncident (
  IncidentID INT UNSIGNED AUTO_INCREMENT,
  MechID INT UNSIGNED NOT NULL,
  StaffID INT UNSIGNED NOT NULL,
+ ReportedByClientID INT UNSIGNED NULL,
  IncidentDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ IssueType VARCHAR(20) NOT NULL DEFAULT 'Routine',
  IncidentDescription TEXT NOT NULL,
  Severity VARCHAR(20) NOT NULL,
- RepairStatus VARCHAR(20) NOT NULL DEFAULT 'Open',
+ RepairStatus VARCHAR(20) NOT NULL DEFAULT 'Reported',
+ EngineeringNotes TEXT NULL,
  RepairCompletedDate DATETIME NULL,
  PRIMARY KEY (IncidentID),
  CONSTRAINT fk_incident_mech FOREIGN KEY (MechID)
  REFERENCES Mech(MechID) ON DELETE RESTRICT ON UPDATE CASCADE,
  CONSTRAINT fk_incident_technician FOREIGN KEY (StaffID)
  REFERENCES PitCrewTechnician(StaffID) ON DELETE RESTRICT ON UPDATE CASCADE,
+ CONSTRAINT fk_incident_client FOREIGN KEY (ReportedByClientID)
+ REFERENCES Client(ClientID) ON DELETE RESTRICT ON UPDATE CASCADE,
+ CONSTRAINT chk_incident_issue_type CHECK (IssueType IN ('Routine','Critical')),
  CONSTRAINT chk_incident_severity CHECK (Severity IN ('Low','Medium','High','Critical')),
- CONSTRAINT chk_incident_repair_status CHECK (RepairStatus IN ('Open','In Progress','Repaired')),
+ CONSTRAINT chk_incident_repair_status CHECK (RepairStatus IN (
+  'Reported','In-Progress','Awaiting Parts','Repaired','Open','In Progress'
+ )),
  CONSTRAINT chk_incident_repair_date CHECK (
   (RepairStatus = 'Repaired' AND RepairCompletedDate IS NOT NULL
    AND RepairCompletedDate >= IncidentDate)
