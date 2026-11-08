@@ -44,7 +44,7 @@ BEGIN
  END IF;
  SELECT COUNT(*) INTO v_CriticalCount
  FROM MaintenanceIncident WHERE MechID = p_MechID
- AND Severity = 'Critical' AND RepairStatus <> 'Repaired';
+ AND IssueType = 'Critical' AND RepairStatus <> 'Repaired';
  IF v_CriticalCount > 0 THEN
   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Mech has unresolved critical maintenance';
  END IF;
