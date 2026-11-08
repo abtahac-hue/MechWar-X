@@ -162,3 +162,33 @@ def cancel_deployment(manifest_id):
         raise
     finally:
         connection.close()
+
+
+def update_incident_status(incident_id, new_status, notes):
+    """Update incident lifecycle status and engineering notes in one transaction."""
+    if new_status not in ("Reported", "In-Progress", "Awaiting Parts", "Repaired"):
+        raise ValueError("Invalid repair status")
+    connection = get_connection()
+    try:
+        cursor = connection.cursor()
+        try:
+            cursor.execute(
+                """UPDATE MaintenanceIncident SET
+                    RepairStatus=%s,
+                    RepairCompletedDate=CASE WHEN %s='Repaired'
+                        THEN GREATEST(NOW(), IncidentDate) ELSE NULL END,
+                    EngineeringNotes=CASE WHEN %s <> '' THEN %s
+                        ELSE EngineeringNotes END
+                   WHERE IncidentID=%s AND RepairStatus <> 'Repaired'""",
+                (new_status, new_status, notes, notes, int(incident_id))
+            )
+            changed = cursor.rowcount
+            connection.commit()
+            return changed
+        finally:
+            cursor.close()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
